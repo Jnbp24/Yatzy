@@ -10,10 +10,16 @@ public class YatzyResultCalculator {
      */
 
     private Die[] dice;
+    private int[] sum = new int[6];
 
     public YatzyResultCalculator(Die[] dice) {
         //TODO: implement YatzyResultCalculator constructor.
         this.dice = dice;
+        for (Die die : dice)
+        {
+            sum[die.getValue()-1]++;
+        }
+
     }
 
     /**
@@ -152,4 +158,5 @@ public class YatzyResultCalculator {
         }
         return 50;
     }
+
 }

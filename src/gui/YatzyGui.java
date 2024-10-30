@@ -1,8 +1,7 @@
 package gui;
 
-import com.sun.glass.events.KeyEvent;
+import models.Die;
 import javafx.application.Application;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -10,14 +9,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import jdk.jfr.Event;
-import models.Die;
+import javafx.event.Event;
 import models.RaffleCup;
 import models.YatzyResultCalculator;
 
@@ -33,8 +29,13 @@ public class YatzyGui extends Application
     private final String[] combinations = {"One Pair", "Two Pair", "Three of a kind", "Four of a kind", "Small straight", "Large straight", "Full house", "Chance", "Yatzy"};
     private ArrayList<CheckBox> holdCheckBoxes = new ArrayList<>();
     private Label remainingRolls = new Label("Rolls remaining" + " " + (maxRolls - rollCount));
-    private RaffleCup raffleCup = new RaffleCup();
-    private YatzyResultCalculator yatzyCal = new YatzyResultCalculator(raffleCup.getDice());
+    private YatzyResultCalculator yatzyCal;
+    private TextField[] comboFields = new TextField[combinations.length];
+    private TextField[] oneToSix = new TextField[6];
+    private int[] scores = new int[combinations.length];
+    private TextField txfPoint = new TextField();
+    Label labeltxf = new Label();
+
 
     @Override
     public void start(Stage stage) throws Exception
@@ -92,27 +93,31 @@ public class YatzyGui extends Application
             pane.add(labeltxf, 0, j + 5);
 
             // Creates textfields for the potential points
+
             TextField txfnumbers = new TextField();
+            oneToSix[j - 1] = txfnumbers;
             txfnumbers.setPrefWidth(10);
+
+
             VBox vBox = new VBox(txfnumbers);
             vBox.setAlignment(Pos.CENTER_LEFT);
             pane.add(vBox, 1, 5 + j);
 
-            txfnumbers.setOnMouseClicked(event -> );
 
         }
-
 
         // Labels for Sum and Bonus textfields
         Label label1 = new Label("Sum");
         Label label2 = new Label("Bonus");
+        Label label3 = new Label("Total");
         pane.add(label1, 4, 12);
         pane.add(label2, 4, 13);
+        pane.add(label3, 4, 14);
 
         // Textfields for Sum and Bonus
-        for (int k = 0; k < 2; k++)
+        for (int k = 0; k < 3; k++)
         {
-            TextField txfPoint = new TextField();
+            txfPoint = new TextField();
             txfPoint.setPrefWidth(10);
             pane.add(txfPoint, 3, k + 12);
         }
@@ -123,10 +128,15 @@ public class YatzyGui extends Application
             Label comboLabel = new Label(combinations[i]);
             TextField comboTextField = new TextField();
             comboTextField.setPrefWidth(60);
+            comboFields[i] = comboTextField;
+
 
             // Add the label and text field to the GridPane in the same row
             pane.add(comboLabel, 0, 14 + i);
             pane.add(comboTextField, 1, 14 + i);
+
+            comboFields[i].setOnMouseClicked(this::chooseFieldAction);
+
         }
 
 
@@ -147,8 +157,58 @@ public class YatzyGui extends Application
     }
 
 
+    private void updatePotentialScores()
+    {
+        Die[] dice = new Die[5];
+        for (int i = 0; i < diceLabels.size(); i++)
+        {
+            dice[i] = new Die(Integer.parseInt(diceLabels.get(i).getText()));
+
+        }
+        yatzyCal = new YatzyResultCalculator(dice);
+
+        for (int j = 0; j < 6; j++)
+        {
+            oneToSix[j].setText(String.valueOf(yatzyCal.upperSectionScore(j + 1)));
+
+        }
 
 
+        for (int i = 0; i < combinations.length; i++)
+        {
+            TextField comboTextField = comboFields[i];
+            switch (i)
+            {
+                case 0:
+                    comboTextField.setText(String.valueOf(yatzyCal.onePairScore()));
+                    break;
+                case 1:
+                    comboTextField.setText(String.valueOf(yatzyCal.twoPairScore()));
+                    break;
+                case 2:
+                    comboTextField.setText(String.valueOf(yatzyCal.threeOfAKindScore()));
+                    break;
+                case 3:
+                    comboTextField.setText(String.valueOf(yatzyCal.fourOfAKindScore()));
+                    break;
+                case 4:
+                    comboTextField.setText(String.valueOf(yatzyCal.smallStraightScore()));
+                    break;
+                case 5:
+                    comboTextField.setText(String.valueOf(yatzyCal.largeStraightScore()));
+                    break;
+                case 6:
+                    comboTextField.setText(String.valueOf(yatzyCal.fullHouseScore()));
+                    break;
+                case 7:
+                    comboTextField.setText(String.valueOf(yatzyCal.chanceScore()));
+                    break;
+                case 8:
+                    comboTextField.setText(String.valueOf(yatzyCal.yatzyScore()));
+                    break;
+            }
+        }
+    }
 
 
     private void rollDice(Button btnRoll)
@@ -170,6 +230,15 @@ public class YatzyGui extends Application
 
             if (rollCount >= maxRolls)
             {
+                Die[] dice = new Die[5];
+                for (int i = 0; i < diceLabels.size(); i++)
+                {
+                    dice[i] = new Die(Integer.parseInt(diceLabels.get(i).getText()));
+
+                }
+
+                yatzyCal = new YatzyResultCalculator(dice);
+                updatePotentialScores();
                 btnRoll.setDisable(true);
             }
         }
@@ -179,18 +248,105 @@ public class YatzyGui extends Application
     {
         rollCount = 0;
         btnRoll.setDisable(false);
-        remainingRolls.setText("Rolls remaining:" + (maxRolls-rollCount));
+        remainingRolls.setText("Rolls remaining:" + (maxRolls - rollCount));
 
-        for (CheckBox checkBox: holdCheckBoxes)
+        for (CheckBox checkBox : holdCheckBoxes)
         {
             checkBox.setSelected(false);
         }
-    }
-    public void chooseFieldAction(Event event)
-    {
-        TextField txfnumbers = (TextField) event.();
+        for (TextField comboField : comboFields)
+        {
+            if(!comboField.isDisabled()){
+                comboField.clear();
+            }
+
+        }
+        for (int i = 0; i < 6; i++)
+        {
+            oneToSix[i].clear();
+        }
     }
 
-}
+    private void updateTotalScore()
+    {
+        int totalScore = 0;
+
+        // Calculate the total from the comboFields (assuming they store integer scores)
+        for (TextField comboField : comboFields)
+        {
+            if (comboField.isDisabled()){
+                int score = comboField.getText().isEmpty() ? 0 : Integer.parseInt(comboField.getText());
+                totalScore += score;
+            }
+            // Parse the score from the text field, default to 0 if empty
+
+        }
+
+        // Set the total score text field with the calculated total
+        txfPoint.setText(String.valueOf(totalScore));
+    }
+
+
+    public void chooseFieldAction(Event event)
+    {
+        TextField textField = (TextField) event.getSource();
+        int clickIndex = GridPane.getRowIndex(textField);
+
+        int index = -1; // Initialize index to track which field was clicked
+        for (int i = 0; i < comboFields.length; i++)
+        {
+            if (comboFields[i] == textField)
+            { // Compare reference to find the correct field
+                index = i;
+                break; // Exit the loop once found
+            }
+        }
+        if (index != -1)
+        { // If a valid index is found
+            // Retrieve the score from the text field
+            int score = Integer.parseInt(textField.getText());
+
+            // Save the score in the scores array
+            scores[index] = score; // Store the score for the selected combination
+
+            // Optionally, disable the field to prevent further editing
+            textField.setEditable(false);
+
+            //optionally disable the textfield for future use.
+            textField.setDisable(true);
+
+            // Update the total score
+            updateTotalScore(); // Call the method to update total score
+        }
+
+        for (int i = 0; i < oneToSix.length; i++)
+        {
+            if (oneToSix[i] == textField)
+            { // Compare reference to find the correct field
+                index = i;
+                break; // Exit the loop once found
+            }
+        }
+        if (index != -1)
+        { // If a valid index is found
+            // Retrieve the score from the text field
+            int score = Integer.parseInt(textField.getText());
+
+            // Save the score in the scores array
+            scores[index] = score; // Store the score for the selected combination
+
+            // Optionally, disable the field to prevent further editing
+            textField.setEditable(false);
+
+            //optionally disable the textfield for future use.
+            textField.setDisable(true);
+
+            // Update the total score
+            updateTotalScore(); // Call the method to update total score
+        }
+    }
+    }
+
+
 
 
