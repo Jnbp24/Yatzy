@@ -2,22 +2,34 @@ package models;
 
 import java.util.Random;
 
-public class Die {
+public class Die
+{
     private int eyes = 0;
     private final Random random = new Random();
 
     /**
      * Creates a new Die object, with face set to eyes. Used for test purpose
+     *
      * @param eyes value should be between 1 and 6
      */
-    public Die(int eyes) {
+    public Die(int eyes)
+    {
         this.eyes = eyes;
     }
 
-    public Die() {
+    public Die()
+    {
     }
 
-    public void roll() {
+    public void roll()
+    {
         //TODO: implement roll method.
+        eyes = random.nextInt(6) + 1;
+    }
+
+    public int getValue()
+    {
+        return eyes;
     }
 }
+
